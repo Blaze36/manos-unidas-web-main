@@ -1,0 +1,13 @@
+{
+  "$schema": "https://railway.app/standard-schema.json",
+  "build": {
+    "builder": "NIXPACKS",
+    "env": {
+      "NIXPACKS_PHP_EXTENSIONS": "pdo_mysql,mysqli,mbstring,gd"
+    }
+  },
+  "deploy": {
+    "startCommand": "apache2-foreground",
+    "restartPolicyType": "ON_FAILURE"
+  }
+}

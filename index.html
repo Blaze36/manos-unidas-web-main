@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ONG Corazones Unidos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .marquee {
+            white-space: nowrap;
+            overflow: hidden;
+            box-sizing: border-box;
+            animation: marquee 15s linear infinite;
+        }
+        @keyframes marquee {
+            0%   { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        .donation-item { transition: all 0.3s ease; }
+        .donation-item:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .toast {
+            position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+            min-width: 300px; max-width: 420px;
+            padding: 16px 20px; border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0,0,0,.18);
+            display: flex; align-items: center; gap: 12px;
+            animation: slideIn .35s ease;
+        }
+        @keyframes slideIn { from { transform: translateY(80px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+        .toast.success { background:#d1fae5; border-left:5px solid #059669; color:#065f46; }
+        .toast.error   { background:#fee2e2; border-left:5px solid #dc2626; color:#991b1b; }
+        .toast.info    { background:#dbeafe; border-left:5px solid #2563eb; color:#1e3a8a; }
+        .btn-loading { opacity:.7; pointer-events:none; }
+
+        /* ── Dashboard / Reportes extra styles ── */
+        .stat-card { transition: transform .2s, box-shadow .2s; }
+        .stat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,.1); }
+        .pill { display:inline-block; padding:2px 10px; border-radius:20px; font-size:.72rem; font-weight:700; }
+        .pill-green  { background:#d1fae5; color:#065f46; }
+        .pill-yellow { background:#fef3c7; color:#92400e; }
+        .pill-blue   { background:#dbeafe; color:#1e40af; }
+        .pill-red    { background:#fee2e2; color:#991b1b; }
+        .pill-gray   { background:#f1f5f9; color:#475569; }
+        .dash-table tr:nth-child(even) td { background:#f8fafc; }
+        .dash-table tr:hover td { background:#e0f2fe; }
+        .dash-table td, .dash-table th { padding:8px 12px; font-size:.84rem; }
+        .bar-wrap   { display:flex; align-items:center; gap:8px; margin-bottom:9px; }
+        .bar-label  { width:120px; font-size:.78rem; color:#475569; text-align:right; flex-shrink:0; }
+        .bar-track  { flex:1; background:#e2e8f0; border-radius:4px; height:20px; overflow:hidden; }
+        .bar-fill   { height:100%; border-radius:4px; transition:width .8s ease; display:flex;
+                      align-items:center; justify-content:flex-end; padding-right:6px;
+                      font-size:.7rem; color:#fff; font-weight:700; white-space:nowrap; }
+        .rep-th { background:#0f766e; color:#fff; font-size:.8rem; padding:9px 12px; text-align:left; whitespace:nowrap; }
+        .rep-td { padding:8px 12px; font-size:.82rem; border-bottom:1px solid #e2e8f0; color:#334155; }
+        tr:hover .rep-td { background:#f0fdfa; }
+        .filter-label { font-size:.8rem; color:#475569; display:block; margin-bottom:3px; font-weight:600; }
+        .filter-ctrl  { border:1px solid #cbd5e1; border-radius:6px; padding:6px 10px;
+                        font-size:.82rem; color:#1e293b; background:#fff; }
+        .rep-tab { padding:8px 18px; font-size:.85rem; font-weight:600; border-bottom:2px solid transparent;
+                   color:#6b7280; cursor:pointer; transition:all .2s; }
+        .rep-tab:hover  { color:#0f766e; }
+        .rep-tab.active { border-color:#0f766e; color:#0f766e; }
+
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+
+<!-- ══════════════════════════════════════════════
+     TOAST CONTAINER
+════════���═════════════════════════════════════ -->
+<div id="toast-container"></div>
+
+<!-- ══════════════════════════════════════════════
+     HEADER
+══════════════════════════════════════════════ -->
+<header class="bg-teal-700 text-white py-6">
+    <div class="container mx-auto px-4 text-center">
+        <img src="https://www.obispadodeibiza.es/wp-content/uploads/2020/09/Manos-Unidas-rectangular-e1600849373647.png"
+             alt="Logo ONG" class="mx-auto h-24 mb-4">
+        <h1 class="text-3xl md:text-4xl font-bold mb-2">Bienvenidos a ONG Corazones Unidos</h1>
+        <p class="text-lg md:text-xl">Comprometidos con ayudar a quienes más lo necesitan</p>
+        <p class="text-lg md:text-xl">Donde tu donación hace la diferencia</p>
+    </div>
+</header>
+
+<!-- ══════════════════════════════════════════════
+     NAVIGATION
+══════════════════════════════════════════════ -->
+<nav class="bg-teal-800 text-white sticky top-0 z-10 shadow-lg">
+    <div class="container mx-auto px-4">
+        <div class="flex flex-wrap justify-center">
+            <a href="#inicio"       class="nav-link px-4 py-3 hover:bg-teal-600 transition duration-300">Inicio</a>
+            <a href="#donaciones"   class="nav-link px-4 py-3 hover:bg-teal-600 transition duration-300">Donaciones</a>
+            <a href="#actividades"  class="nav-link px-4 py-3 hover:bg-teal-600 transition duration-300">Actividades</a>
+            <a href="#afectados"    class="nav-link px-4 py-3 hover:bg-teal-600 transition duration-300">Afectados</a>
+            <a href="#mision-vision" class="nav-link px-4 py-3 hover:bg-teal-600 transition duration-300">Misión y Visión</a>
+            <a href="#registro"     class="nav-link px-4 py-3 hover:bg-teal-600 transition duration-300">Regístrate</a>
+            <a href="#dashboard"    class="nav-link px-4 py-3 hover:bg-teal-600 transition duration-300"></i> Dashboard</a>
+            <a href="#reportes"     class="nav-link px-4 py-3 hover:bg-teal-600 transition duration-300"></i> Reportes</a>
+        </div>
+    </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════
+     MAIN
+══════════════════════════════════════════════ -->
+<main class="container mx-auto px-4 py-8">
+
+    <!-- ── INICIO ─────────────────────────────── -->
+    <section id="inicio" class="mb-16 bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-2xl md:text-3xl font-bold text-teal-800 mb-4">¿Quiénes somos?</h2>
+        <div class="grid md:grid-cols-2 gap-8 items-center">
+            <div>
+                <p class="text-gray-700 mb-4">Somos una organización sin fines de lucro especializada en ayudar y brindar apoyo a cada persona que lo necesite a través de donaciones. Recuerda que tú también puedes ser parte de nosotros, regístrate y ayúdanos a cambiar miles de vidas.</p>
+                <p class="text-gray-700 mb-6">¡Tu ayuda puede cambiar miles de vidas! Explora nuestro sitio para conocer cómo puedes colaborar, recuerda que una pequeña donación hace una gran diferencia.</p>
+                <div class="bg-teal-100 border-l-4 border-teal-500 p-4 mb-6">
+                    <p class="font-semibold text-teal-800">"Nadie es tan pobre que no pueda dar, ni tan rico que no pueda recibir"</p>
+                </div>
+            </div>
+            <div class="rounded-lg overflow-hidden shadow-lg">
+                <img src="https://images.unsplash.com/photo-1521791055366-0d553872125f?auto=format&fit=crop&w=1470&q=80"
+                     alt="Voluntarios ayudando" class="w-full h-auto">
+            </div>
+        </div>
+        <div class="mt-6 bg-teal-700 text-white py-2 px-4 rounded">
+            <div class="marquee">
+                <span class="text-lg font-semibold">¡Recuerda registrarte y ser parte de nuestra gran comunidad desde cualquier parte del mundo!</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── DONACIONES ──────────────────────────── -->
+    <section id="donaciones" class="mb-16 bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-2xl md:text-3xl font-bold text-teal-800 mb-6">Haz tu Donación</h2>
+        <p class="text-gray-700 mb-8">Tu contribución nos ayuda a continuar con nuestra labor. Selecciona los artículos que deseas donar:</p>
+
+        <form id="formulario-donacion" class="mb-8" novalidate>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+
+                <!-- Alimentos -->
+                <div class="donation-item bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                    <div class="flex items-center mb-3">
+                        <input type="checkbox" id="chk-alimentos" name="donation" value="alimentos" class="mr-3 h-5 w-5 text-teal-600">
+                        <label for="chk-alimentos" class="font-semibold text-gray-800">Alimentos no perecederos</label>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-3">Arroz, frijoles, pasta, aceite, azúcar, harina, etc.</p>
+                    <div class="flex items-center">
+                        <span class="text-teal-700 font-bold mr-2">Cantidad:</span>
+                        <input type="number" min="1" value="1" name="alimentos_cantidad" class="qty-field w-20 border border-gray-300 rounded px-2 py-1" disabled>
+                        <span class="ml-2 text-gray-600">unidades</span>
+                    </div>
+                </div>
+
+                <!-- Ropa -->
+                <div class="donation-item bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                    <div class="flex items-center mb-3">
+                        <input type="checkbox" id="chk-ropa" name="donation" value="ropa" class="mr-3 h-5 w-5 text-teal-600">
+                        <label for="chk-ropa" class="font-semibold text-gray-800">Ropa y calzado</label>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-3">Ropa en buen estado para niños y adultos, zapatos, etc.</p>
+                    <div class="flex items-center">
+                        <span class="text-teal-700 font-bold mr-2">Cantidad:</span>
+                        <input type="number" min="1" value="1" name="ropa_cantidad" class="qty-field w-20 border border-gray-300 rounded px-2 py-1" disabled>
+                        <span class="ml-2 text-gray-600">unidades</span>
+                    </div>
+                </div>
+
+                <!-- Medicamentos -->
+                <div class="donation-item bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                    <div class="flex items-center mb-3">
+                        <input type="checkbox" id="chk-medicamentos" name="donation" value="medicamentos" class="mr-3 h-5 w-5 text-teal-600">
+                        <label for="chk-medicamentos" class="font-semibold text-gray-800">Medicamentos</label>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-3">Analgésicos, antibióticos, vendas, primeros auxilios.</p>
+                    <div class="flex items-center">
+                        <span class="text-teal-700 font-bold mr-2">Cantidad:</span>
+                        <input type="number" min="1" value="1" name="medicamentos_cantidad" class="qty-field w-20 border border-gray-300 rounded px-2 py-1" disabled>
+                        <span class="ml-2 text-gray-600">unidades</span>
+                    </div>
+                </div>
+
+                <!-- Útiles -->
+                <div class="donation-item bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                    <div class="flex items-center mb-3">
+                        <input type="checkbox" id="chk-utiles" name="donation" value="utiles" class="mr-3 h-5 w-5 text-teal-600">
+                        <label for="chk-utiles" class="font-semibold text-gray-800">Útiles escolares</label>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-3">Cuadernos, lápices, colores, mochilas, etc.</p>
+                    <div class="flex items-center">
+                        <span class="text-teal-700 font-bold mr-2">Cantidad:</span>
+                        <input type="number" min="1" value="1" name="utiles_cantidad" class="qty-field w-20 border border-gray-300 rounded px-2 py-1" disabled>
+                        <span class="ml-2 text-gray-600">unidades</span>
+                    </div>
+                </div>
+
+                <!-- Juguetes -->
+                <div class="donation-item bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                    <div class="flex items-center mb-3">
+                        <input type="checkbox" id="chk-juguetes" name="donation" value="juguetes" class="mr-3 h-5 w-5 text-teal-600">
+                        <label for="chk-juguetes" class="font-semibold text-gray-800">Juguetes</label>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-3">Juguetes educativos, peluches, juegos de mesa.</p>
+                    <div class="flex items-center">
+                        <span class="text-teal-700 font-bold mr-2">Cantidad:</span>
+                        <input type="number" min="1" value="1" name="juguetes_cantidad" class="qty-field w-20 border border-gray-300 rounded px-2 py-1" disabled>
+                        <span class="ml-2 text-gray-600">unidades</span>
+                    </div>
+                </div>
+
+                <!-- Dinero -->
+                <div class="donation-item bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                    <div class="flex items-center mb-3">
+                        <input type="checkbox" id="chk-dinero" name="donation" value="dinero" class="mr-3 h-5 w-5 text-teal-600">
+                        <label for="chk-dinero" class="font-semibold text-gray-800">Donación monetaria</label>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-3">Cualquier cantidad es bienvenida para apoyar nuestros proyectos.</p>
+                    <div class="flex items-center">
+                        <span class="text-teal-700 font-bold mr-2">Monto:</span>
+                        <input type="number" min="1" value="100" name="dinero_monto" class="qty-field w-24 border border-gray-300 rounded px-2 py-1" disabled>
+                        <span class="ml-2 text-gray-600">Lempiras</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Datos de contacto -->
+            <div class="bg-teal-50 border border-teal-200 rounded-lg p-4 mb-6">
+                <h3 class="font-semibold text-teal-800 mb-2">Información de contacto</h3>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="don-nombre" class="block text-gray-700 mb-1">Nombre completo *</label>
+                        <input type="text" id="don-nombre" name="nombre" required class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label for="don-email" class="block text-gray-700 mb-1">Correo electrónico *</label>
+                        <input type="email" id="don-email" name="email" required class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label for="don-telefono" class="block text-gray-700 mb-1">Teléfono</label>
+                        <input type="tel" id="don-telefono" name="telefono" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label for="don-direccion" class="block text-gray-700 mb-1">Dirección para recoger donación</label>
+                        <input type="text" id="don-direccion" name="direccion" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <button type="submit" id="btn-enviar-donacion"
+                    class="bg-teal-700 hover:bg-teal-800 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300">
+                    <i class="fas fa-hand-holding-heart mr-2"></i> Enviar donación
+                </button>
+            </div>
+        </form>
+
+        <!-- Otras formas -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h3 class="font-semibold text-blue-800 mb-2">Otras formas de donar</h3>
+            <div class="grid md:grid-cols-3 gap-4">
+                <div class="bg-white p-4 rounded-lg shadow-sm">
+                    <div class="text-blue-600 mb-2"><i class="fas fa-mobile-alt text-2xl"></i></div>
+                    <h4 class="font-semibold mb-1">Donación por teléfono</h4>
+                    <p class="text-sm text-gray-600">Llama al +504 2234-5678 para donar con tarjeta</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm">
+                    <div class="text-blue-600 mb-2"><i class="fas fa-university text-2xl"></i></div>
+                    <h4 class="font-semibold mb-1">Transferencia bancaria</h4>
+                    <p class="text-sm text-gray-600">Cuenta: 1234567890 Banco Atlántida</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm">
+                    <div class="text-blue-600 mb-2"><i class="fas fa-calendar-alt text-2xl"></i></div>
+                    <h4 class="font-semibold mb-1">Donación recurrente</h4>
+                    <p class="text-sm text-gray-600">Programa donaciones mensuales automáticas</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── ACTIVIDADES ─────────────────────────── -->
+    <section id="actividades" class="mb-16 bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-2xl md:text-3xl font-bold text-teal-800 mb-6">Nuestras Actividades</h2>
+
+        <div class="mb-8">
+            <div class="flex items-center mb-4">
+                <div class="bg-teal-100 p-2 rounded-full mr-3"><i class="fas fa-utensils text-teal-700 text-xl"></i></div>
+                <h3 class="text-xl font-semibold text-gray-800">Programa de Alimentación</h3>
+            </div>
+            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-gray-700 mb-2">Desayunos escolares</h4>
+                    <p class="text-gray-600 mb-3">Proporcionamos desayunos nutritivos a más de 500 niños en escuelas rurales cada día.</p>
+                    <div class="flex items-center text-sm text-gray-500"><i class="fas fa-map-marker-alt mr-2"></i><span>Escuelas rurales de Tegucigalpa</span></div>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-gray-700 mb-2">Comedores comunitarios</h4>
+                    <p class="text-gray-600 mb-3">Operamos 12 comedores que sirven almuerzos completos a familias necesitadas.</p>
+                    <div class="flex items-center text-sm text-gray-500"><i class="fas fa-clock mr-2"></i><span>Lunes a viernes, 12:00 pm - 2:00 pm</span></div>
+                </div>
+            </div>
+            <div class="bg-teal-50 border-l-4 border-teal-500 p-4">
+                <p class="text-teal-800"><span class="font-bold">Próxima actividad:</span> Campaña de recolección de alimentos - 15 de julio, 2023</p>
+            </div>
+        </div>
+
+        <div class="mb-8">
+            <div class="flex items-center mb-4">
+                <div class="bg-teal-100 p-2 rounded-full mr-3"><i class="fas fa-book text-teal-700 text-xl"></i></div>
+                <h3 class="text-xl font-semibold text-gray-800">Educación y Capacitación</h3>
+            </div>
+            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-gray-700 mb-2">Clases de alfabetización</h4>
+                    <p class="text-gray-600 mb-3">Programas para adultos que no han tenido acceso a educación básica.</p>
+                    <div class="flex items-center text-sm text-gray-500"><i class="fas fa-users mr-2"></i><span>120 adultos beneficiados este año</span></div>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-gray-700 mb-2">Talleres vocacionales</h4>
+                    <p class="text-gray-600 mb-3">Carpintería, costura, panadería y otros oficios para generar ingresos.</p>
+                    <div class="flex items-center text-sm text-gray-500"><i class="fas fa-graduation-cap mr-2"></i><span>85% de graduados consiguen empleo</span></div>
+                </div>
+            </div>
+            <div class="bg-teal-50 border-l-4 border-teal-500 p-4">
+                <p class="text-teal-800"><span class="font-bold">Inscripciones abiertas:</span> Taller de panadería - Inicia 1 de agosto</p>
+            </div>
+        </div>
+
+        <div class="mb-8">
+            <div class="flex items-center mb-4">
+                <div class="bg-teal-100 p-2 rounded-full mr-3"><i class="fas fa-medkit text-teal-700 text-xl"></i></div>
+                <h3 class="text-xl font-semibold text-gray-800">Salud Comunitaria</h3>
+            </div>
+            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-gray-700 mb-2">Clínicas móviles</h4>
+                    <p class="text-gray-600 mb-3">Atención médica básica y medicamentos en zonas remotas.</p>
+                    <div class="flex items-center text-sm text-gray-500"><i class="fas fa-heartbeat mr-2"></i><span>1,200 consultas mensuales</span></div>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-gray-700 mb-2">Campañas de vacunación</h4>
+                    <p class="text-gray-600 mb-3">Prevención de enfermedades en niños y adultos mayores.</p>
+                    <div class="flex items-center text-sm text-gray-500"><i class="fas fa-syringe mr-2"></i><span>Próxima campaña: octubre 2023</span></div>
+                </div>
+            </div>
+            <div class="bg-teal-50 border-l-4 border-teal-500 p-4">
+                <p class="text-teal-800"><span class="font-bold">Necesitamos:</span> Médicos voluntarios para jornada del 20 de julio</p>
+            </div>
+        </div>
+
+        <div class="bg-blue-50 rounded-lg p-6 text-center">
+            <h3 class="text-xl font-bold text-blue-800 mb-3">¿Quieres ser voluntario?</h3>
+            <p class="text-gray-700 mb-4">Únete a nuestro equipo y ayuda a transformar vidas. Tenemos oportunidades para todas las habilidades.</p>
+            <a href="#registro" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg inline-block transition duration-300">Regístrate como voluntario</a>
+        </div>
+    </section>
+
+    <!-- ── AFECTADOS ────────────────────────────── -->
+    <section id="afectados" class="mb-16 bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-2xl md:text-3xl font-bold text-teal-800 mb-6">Historias de los Afectados</h2>
+
+        <div class="mb-8">
+            <div class="grid md:grid-cols-2 gap-8 mb-8">
+                <div class="bg-gray-50 p-6 rounded-lg shadow-sm">
+                    <div class="flex items-center mb-4">
+                        <img src="https://images.unsplash.com/photo-1551650975-87deedd944c3?auto=format&fit=crop&w=1374&q=80" alt="Familia Martínez" class="w-16 h-16 rounded-full object-cover mr-4">
+                        <div><h3 class="font-semibold text-gray-800">Familia Martínez</h3><p class="text-sm text-gray-600">Tegucigalpa, Honduras</p></div>
+                    </div>
+                    <p class="text-gray-700 mb-4">"Perdimos nuestra casa en el huracán Eta. Gracias a Corazones Unidos recibimos alimentos, ropa y materiales para reconstruir nuestro hogar. Ahora nuestros hijos pueden volver a la escuela con útiles nuevos."</p>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded">Vivienda</span>
+                        <span class="bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded">Educación</span>
+                        <span class="bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded">Alimentación</span>
+                    </div>
+                </div>
+                <div class="bg-gray-50 p-6 rounded-lg shadow-sm">
+                    <div class="flex items-center mb-4">
+                        <img src="https://images.unsplash.com/photo-1573497491765-dccce02b29df?auto=format&fit=crop&w=1374&q=80" alt="Doña Rosa" class="w-16 h-16 rounded-full object-cover mr-4">
+                        <div><h3 class="font-semibold text-gray-800">Doña Rosa</h3><p class="text-sm text-gray-600">San Pedro Sula, Honduras</p></div>
+                    </div>
+                    <p class="text-gray-700 mb-4">"Aprendí a leer y escribir a mis 65 años gracias a los programas de alfabetización. Ahora puedo ayudar a mis nietos con sus tareas y leer la Biblia por mí misma. Nunca es tarde para aprender."</p>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded">Educación</span>
+                        <span class="bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded">Adultos mayores</span>
+                    </div>
+                </div>
+            </div>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-gray-50 p-6 rounded-lg shadow-sm">
+                    <div class="flex items-center mb-4">
+                        <img src="https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=1374&q=80" alt="Juan Carlos" class="w-16 h-16 rounded-full object-cover mr-4">
+                        <div><h3 class="font-semibold text-gray-800">Juan Carlos</h3><p class="text-sm text-gray-600">La Ceiba, Honduras</p></div>
+                    </div>
+                    <p class="text-gray-700 mb-4">"Después del accidente perdí la movilidad en mis piernas. Corazones Unidos me proporcionó una silla de ruedas y terapia física. Ahora tengo mi propio taller de reparación de celulares gracias al curso que tomé con ellos."</p>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded">Discapacidad</span>
+                        <span class="bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded">Capacitación</span>
+                        <span class="bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded">Empleo</span>
+                    </div>
+                </div>
+                <div class="bg-gray-50 p-6 rounded-lg shadow-sm">
+                    <div class="flex items-center mb-4">
+                        <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=1376&q=80" alt="Comunidad El Porvenir" class="w-16 h-16 rounded-full object-cover mr-4">
+                        <div><h3 class="font-semibold text-gray-800">Comunidad El Porvenir</h3><p class="text-sm text-gray-600">Santa Bárbara, Honduras</p></div>
+                    </div>
+                    <p class="text-gray-700 mb-4">"Gracias al pozo que construyó Corazones Unidos, ya no tenemos que caminar kilómetros para conseguir agua potable. Nuestros niños están más sanos y las mujeres tienen más tiempo para otras actividades."</p>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded">Agua potable</span>
+                        <span class="bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded">Salud</span>
+                        <span class="bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded">Desarrollo comunitario</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-8">
+            <h3 class="font-semibold text-red-800 mb-2">Emergencia actual</h3>
+            <p class="text-gray-700">Más de 200 familias afectadas por inundaciones en el Valle de Sula necesitan ayuda urgente con alimentos, agua y medicinas.</p>
+            <a href="#donaciones" class="text-red-600 font-semibold inline-block mt-2 hover:underline">¿Cómo puedes ayudar?</a>
+        </div>
+
+        <div class="bg-teal-700 text-white rounded-lg p-6">
+            <h3 class="text-xl font-bold mb-4">Impacto de tu ayuda</h3>
+            <div class="grid md:grid-cols-4 gap-4 text-center">
+                <div><div class="text-3xl font-bold mb-1">5,000+</div><div class="text-sm">Personas beneficiadas</div></div>
+                <div><div class="text-3xl font-bold mb-1">120</div><div class="text-sm">Comunidades alcanzadas</div></div>
+                <div><div class="text-3xl font-bold mb-1">35</div><div class="text-sm">Proyectos activos</div></div>
+                <div><div class="text-3xl font-bold mb-1">250</div><div class="text-sm">Voluntarios activos</div></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── MISIÓN Y VISIÓN ─────────────────────── -->
+    <section id="mision-vision" class="mb-16 bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-2xl md:text-3xl font-bold text-teal-800 mb-6">Misión y Visión</h2>
+
+        <div class="grid md:grid-cols-2 gap-8 mb-8">
+            <div class="bg-teal-50 rounded-lg p-6">
+                <div class="flex items-center mb-4">
+                    <div class="bg-teal-700 text-white p-3 rounded-full mr-4"><i class="fas fa-bullseye text-xl"></i></div>
+                    <h3 class="text-xl font-semibold text-teal-800">Nuestra Misión</h3>
+                </div>
+                <p class="text-gray-700 mb-4">Nuestra misión es la lucha contra el hambre, el subdesarrollo y la falta de instrucción y trabajar para erradicar las causas estructurales que las producen: la injusticia, el desigual reparto de los bienes y las oportunidades entre las personas y los pueblos, la ignorancia, los prejuicios, la insolidaridad, la indiferencia y la crisis de valores humanos y cristianos.</p>
+                <div class="bg-white p-4 rounded-lg border border-teal-200">
+                    <p class="text-teal-700 italic">"No esperes a que otros actúen, sé el cambio que quieres ver en el mundo."</p>
+                </div>
+            </div>
+            <div class="bg-blue-50 rounded-lg p-6">
+                <div class="flex items-center mb-4">
+                    <div class="bg-blue-700 text-white p-3 rounded-full mr-4"><i class="fas fa-eye text-xl"></i></div>
+                    <h3 class="text-xl font-semibold text-blue-800">Nuestra Visión</h3>
+                </div>
+                <p class="text-gray-700 mb-4">Nuestra visión, cuyo fundamento es el Evangelio y la Doctrina Social de la Iglesia, es que cada persona, hombre y mujer, en virtud de su dignidad, sea capaz de ser, por sí mismo, agente responsable de su mejora material, de su progreso moral y de su desarrollo espiritual, y goce de una vida digna.</p>
+                <div class="bg-white p-4 rounded-lg border border-blue-200">
+                    <p class="text-blue-700 italic">"Soñamos con un mundo donde cada persona tenga acceso a lo necesario para vivir con dignidad."</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-8">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Nuestros Valores</h3>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-teal-500"><h4 class="font-semibold text-gray-800 mb-2">1. La dignidad de la persona</h4><p class="text-gray-600">Reconocemos el valor intrínseco de cada ser humano, independientemente de su condición.</p></div>
+                <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-teal-500"><h4 class="font-semibold text-gray-800 mb-2">2. El destino universal de los bienes</h4><p class="text-gray-600">Creemos que los recursos del mundo deben beneficiar a todos, no solo a unos pocos.</p></div>
+                <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-teal-500"><h4 class="font-semibold text-gray-800 mb-2">3. El bien común</h4><p class="text-gray-600">Trabajamos por condiciones que permitan a todos desarrollarse plenamente.</p></div>
+                <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-teal-500"><h4 class="font-semibold text-gray-800 mb-2">4. La solidaridad</h4><p class="text-gray-600">Nos comprometemos mutuamente como miembros de una sola familia humana.</p></div>
+                <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-teal-500"><h4 class="font-semibold text-gray-800 mb-2">5. La subsidiariedad</h4><p class="text-gray-600">Empoderamos a las comunidades para que sean protagonistas de su propio desarrollo.</p></div>
+            </div>
+        </div>
+
+        <div class="mb-8">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Nuestra gestión se guía por:</h3>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="flex items-start"><div class="bg-teal-100 p-2 rounded-full mr-3 mt-1"><i class="fas fa-hands-helping text-teal-700"></i></div><div><h4 class="font-semibold text-gray-800">El voluntariado</h4><p class="text-gray-600">El corazón de nuestra organización.</p></div></div>
+                <div class="flex items-start"><div class="bg-teal-100 p-2 rounded-full mr-3 mt-1"><i class="fas fa-hand-holding-usd text-teal-700"></i></div><div><h4 class="font-semibold text-gray-800">La austeridad</h4><p class="text-gray-600">Maximizamos el impacto de cada donación.</p></div></div>
+                <div class="flex items-start"><div class="bg-teal-100 p-2 rounded-full mr-3 mt-1"><i class="fas fa-peace text-teal-700"></i></div><div><h4 class="font-semibold text-gray-800">La cultura de la paz</h4><p class="text-gray-600">Promovemos la reconciliación y la justicia.</p></div></div>
+                <div class="flex items-start"><div class="bg-teal-100 p-2 rounded-full mr-3 mt-1"><i class="fas fa-handshake text-teal-700"></i></div><div><h4 class="font-semibold text-gray-800">La cooperación</h4><p class="text-gray-600">Trabajamos en red con otras organizaciones.</p></div></div>
+                <div class="flex items-start"><div class="bg-teal-100 p-2 rounded-full mr-3 mt-1"><i class="fas fa-award text-teal-700"></i></div><div><h4 class="font-semibold text-gray-800">La calidad</h4><p class="text-gray-600">Buscamos la excelencia en todo lo que hacemos.</p></div></div>
+                <div class="flex items-start"><div class="bg-teal-100 p-2 rounded-full mr-3 mt-1"><i class="fas fa-clipboard-check text-teal-700"></i></div><div><h4 class="font-semibold text-gray-800">La transparencia</h4><p class="text-gray-600">Rendimos cuentas claras de nuestro trabajo.</p></div></div>
+            </div>
+        </div>
+
+        <div class="bg-gray-50 border-l-4 border-gray-500 p-4">
+            <h3 class="font-semibold text-gray-800 mb-2">Reconocimientos</h3>
+            <p class="text-gray-700">Hemos sido reconocidos por nuestra labor con el Premio Nacional de Solidaridad (2020) y el Sello de Transparencia y Buen Gobierno por tres años consecutivos.</p>
+        </div>
+    </section>
+
+    <!-- ── REGISTRO ─────────────────────────────── -->
+    <section id="registro" class="mb-16 bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-2xl md:text-3xl font-bold text-teal-800 mb-6">Regístrate como voluntario o donador</h2>
+
+        <div class="grid md:grid-cols-2 gap-8 mb-8">
+            <div class="bg-teal-50 rounded-lg p-6">
+                <h3 class="text-xl font-semibold text-teal-800 mb-4">Voluntariado</h3>
+                <p class="text-gray-700 mb-4">Únete a nuestro equipo de voluntarios y contribuye con tu tiempo y habilidades.</p>
+                <div class="mb-6">
+                    <h4 class="font-semibold text-gray-800 mb-2">Áreas de voluntariado:</h4>
+                    <ul class="list-disc pl-5 text-gray-700">
+                        <li class="mb-1">Atención directa a beneficiarios</li>
+                        <li class="mb-1">Logística y distribución</li>
+                        <li class="mb-1">Capacitación y enseñanza</li>
+                        <li class="mb-1">Salud y primeros auxilios</li>
+                        <li class="mb-1">Recaudación de fondos</li>
+                        <li class="mb-1">Comunicación y redes sociales</li>
+                    </ul>
+                </div>
+                <div class="bg-white p-4 rounded-lg border border-teal-200 mb-4">
+                    <h4 class="font-semibold text-teal-800 mb-2">Beneficios:</h4>
+                    <ul class="list-disc pl-5 text-gray-700">
+                        <li class="mb-1">Capacitación continua</li>
+                        <li class="mb-1">Certificado de voluntariado</li>
+                        <li class="mb-1">Experiencia en trabajo social</li>
+                        <li class="mb-1">Seguro contra accidentes</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="bg-blue-50 rounded-lg p-6">
+                <h3 class="text-xl font-semibold text-blue-800 mb-4">Donaciones</h3>
+                <p class="text-gray-700 mb-4">Tu contribución económica nos permite mantener y ampliar nuestros programas.</p>
+                <div class="mb-6">
+                    <h4 class="font-semibold text-gray-800 mb-2">Formas de donar:</h4>
+                    <ul class="list-disc pl-5 text-gray-700">
+                        <li class="mb-1">Donación única</li>
+                        <li class="mb-1">Donación recurrente mensual</li>
+                        <li class="mb-1">Donación en especie (alimentos, ropa, etc.)</li>
+                        <li class="mb-1">Donación corporativa</li>
+                        <li class="mb-1">Legados y herencias</li>
+                    </ul>
+                </div>
+                <div class="bg-white p-4 rounded-lg border border-blue-200">
+                    <h4 class="font-semibold text-blue-800 mb-2">Beneficios fiscales:</h4>
+                    <p class="text-gray-700">Todas tus donaciones son deducibles de impuestos. Te enviaremos un comprobante fiscal válido.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulario de Registro -->
+        <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+            <h3 class="text-xl font-semibold text-gray-800 mb-6">Formulario de Registro</h3>
+
+            <form id="formulario-registro" novalidate>
+                <div class="grid md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label for="reg-nombre" class="block text-gray-700 mb-1">Nombre completo *</label>
+                        <input type="text" id="reg-nombre" name="nombre-completo" required
+                            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label for="reg-email" class="block text-gray-700 mb-1">Correo electrónico *</label>
+                        <input type="email" id="reg-email" name="email" required
+                            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label for="reg-telefono" class="block text-gray-700 mb-1">Teléfono *</label>
+                        <input type="tel" id="reg-telefono" name="telefono" required
+                            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label for="reg-ciudad" class="block text-gray-700 mb-1">Ciudad *</label>
+                        <input type="text" id="reg-ciudad" name="ciudad" required
+                            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-gray-700 mb-2">¿Cómo deseas ayudar? *</label>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div class="flex items-center"><input type="radio" id="reg-voluntario" name="ayuda" value="voluntario" class="mr-2"><label for="reg-voluntario" class="text-gray-700">Voluntario</label></div>
+                        <div class="flex items-center"><input type="radio" id="reg-donador" name="ayuda" value="donador" class="mr-2"><label for="reg-donador" class="text-gray-700">Donador</label></div>
+                        <div class="flex items-center"><input type="radio" id="reg-ambos" name="ayuda" value="ambos" class="mr-2"><label for="reg-ambos" class="text-gray-700">Ambos</label></div>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label for="reg-habilidades" class="block text-gray-700 mb-1">Habilidades o profesión</label>
+                    <textarea id="reg-habilidades" name="habilidades" rows="3"
+                        class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        placeholder="Describa sus habilidades, profesión o áreas de interés"></textarea>
+                </div>
+
+                <div class="mb-6">
+                    <label for="reg-disponibilidad" class="block text-gray-700 mb-1">Disponibilidad *</label>
+                    <select id="reg-disponibilidad" name="disponibilidad" required
+                        class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500">
+                        <option value="">Seleccione una opción</option>
+                        <option value="completa">Tiempo completo</option>
+                        <option value="parcial">Tiempo parcial</option>
+                        <option value="fines">Fines de semana</option>
+                        <option value="eventos">Solo eventos especiales</option>
+                    </select>
+                </div>
+
+                <div class="mb-6">
+                    <label for="reg-conocio" class="block text-gray-700 mb-1">¿Cómo nos conoció?</label>
+                    <textarea id="reg-conocio" name="como-conocio" rows="2"
+                        class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        placeholder="Redes sociales, amigos, evento, etc."></textarea>
+                </div>
+
+                <div class="flex items-center mb-4">
+                    <input type="checkbox" id="reg-privacidad" name="privacidad" required class="mr-2">
+                    <label for="reg-privacidad" class="text-gray-700">Acepto la política de privacidad y el tratamiento de mis datos *</label>
+                </div>
+
+                <div class="flex items-center mb-6">
+                    <input type="checkbox" id="reg-newsletter" name="newsletter" class="mr-2">
+                    <label for="reg-newsletter" class="text-gray-700">Deseo recibir información sobre actividades y campañas</label>
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" id="btn-enviar-registro"
+                        class="bg-teal-700 hover:bg-teal-800 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition duration-300 transform hover:scale-105">
+                        <i class="fas fa-paper-plane mr-2"></i> Enviar registro
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Contacto -->
+        <div class="bg-gray-50 rounded-lg p-6 mt-8">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Contacto</h3>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div><div class="flex items-center mb-2"><i class="fas fa-map-marker-alt text-teal-700 mr-3"></i><span class="text-gray-700">Col. Palmira, Ave. Cervantes, Tegucigalpa, Honduras</span></div></div>
+                <div>
+                    <div class="flex items-center mb-2"><i class="fas fa-phone-alt text-teal-700 mr-3"></i><span class="text-gray-700">+504 2234-5678</span></div>
+                    <div class="flex items-center"><i class="fas fa-envelope text-teal-700 mr-3"></i><span class="text-gray-700">info@corazonesunidos.hn</span></div>
+                </div>
+                <div>
+                    <div class="flex items-center mb-2"><i class="fas fa-clock text-teal-700 mr-3"></i><span class="text-gray-700">Lunes a viernes: 8:00 am - 5:00 pm</span></div>
+                    <div class="flex items-center"><i class="fas fa-calendar-alt text-teal-700 mr-3"></i><span class="text-gray-700">Sábados: 9:00 am - 12:00 pm</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ── DASHBOARD ─────────────────────────── -->
+    <section id="dashboard" class="mb-16 bg-white rounded-lg shadow-md p-6">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <div>
+                <h2 class="text-2xl md:text-3xl font-bold text-teal-800">
+                    <i class="fas fa-chart-line text-teal-600 mr-2 hidden"></i>Dashboard
+                </h2>
+                <p class="text-gray-500 text-sm mt-1">Resumen en tiempo real de la actividad de la ONG</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <span id="dash-updated" class="text-xs text-gray-400 italic"></span>
+                <button onclick="loadDashboard()" class="bg-teal-700 hover:bg-teal-800 text-white text-sm px-4 py-2 rounded-lg flex items-center gap-2 transition duration-300">
+                    <i class="fas fa-sync-alt"></i> Actualizar
+                </button>
+            </div>
+        </div>
+
+        <!-- KPI Row 1 -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="stat-card bg-teal-50 border border-teal-200 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs text-teal-700 font-bold uppercase tracking-wide">Personas</span>
+                    <div class="bg-teal-100 p-2 rounded-full"><i class="fas fa-users text-teal-600"></i></div>
+                </div>
+                <div id="kpi-personas" class="text-3xl font-bold text-gray-800">—</div>
+                <p class="text-xs text-gray-500 mt-1">registradas en total</p>
+            </div>
+            <div class="stat-card bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs text-blue-700 font-bold uppercase tracking-wide">Voluntarios</span>
+                    <div class="bg-blue-100 p-2 rounded-full"><i class="fas fa-hand-holding-heart text-blue-600"></i></div>
+                </div>
+                <div id="kpi-voluntarios" class="text-3xl font-bold text-gray-800">—</div>
+                <p class="text-xs text-gray-500 mt-1">activos</p>
+            </div>
+            <div class="stat-card bg-orange-50 border border-orange-200 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs text-orange-700 font-bold uppercase tracking-wide">Donaciones</span>
+                    <div class="bg-orange-100 p-2 rounded-full"><i class="fas fa-donate text-orange-600"></i></div>
+                </div>
+                <div id="kpi-donaciones" class="text-3xl font-bold text-gray-800">—</div>
+                <p class="text-xs text-gray-500 mt-1">registradas</p>
+            </div>
+            <div class="stat-card bg-green-50 border border-green-200 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs text-green-700 font-bold uppercase tracking-wide">Lempiras</span>
+                    <div class="bg-green-100 p-2 rounded-full"><i class="fas fa-coins text-green-600"></i></div>
+                </div>
+                <div id="kpi-lempiras" class="text-3xl font-bold text-gray-800">—</div>
+                <p class="text-xs text-gray-500 mt-1">donados en total</p>
+            </div>
+        </div>
+
+        <!-- KPI Row 2 -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="stat-card bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs text-purple-700 font-bold uppercase tracking-wide">Beneficiarios</span>
+                    <div class="bg-purple-100 p-2 rounded-full"><i class="fas fa-heart text-purple-600"></i></div>
+                </div>
+                <div id="kpi-beneficiarios" class="text-3xl font-bold text-gray-800">—</div>
+                <p class="text-xs text-gray-500 mt-1">activos</p>
+            </div>
+            <div class="stat-card bg-pink-50 border border-pink-200 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs text-pink-700 font-bold uppercase tracking-wide">Actividades</span>
+                    <div class="bg-pink-100 p-2 rounded-full"><i class="fas fa-calendar-check text-pink-600"></i></div>
+                </div>
+                <div id="kpi-actividades" class="text-3xl font-bold text-gray-800">—</div>
+                <p class="text-xs text-gray-500 mt-1">activas</p>
+            </div>
+            <div class="stat-card bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs text-yellow-700 font-bold uppercase tracking-wide">Pendientes</span>
+                    <div class="bg-yellow-100 p-2 rounded-full"><i class="fas fa-clock text-yellow-600"></i></div>
+                </div>
+                <div id="kpi-pendientes" class="text-3xl font-bold text-gray-800">—</div>
+                <p class="text-xs text-gray-500 mt-1">donaciones por atender</p>
+            </div>
+            <div class="stat-card bg-cyan-50 border border-cyan-200 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs text-cyan-700 font-bold uppercase tracking-wide">Newsletter</span>
+                    <div class="bg-cyan-100 p-2 rounded-full"><i class="fas fa-envelope text-cyan-600"></i></div>
+                </div>
+                <div id="kpi-suscriptores" class="text-3xl font-bold text-gray-800">—</div>
+                <p class="text-xs text-gray-500 mt-1">suscriptores activos</p>
+            </div>
+        </div>
+
+        <!-- Tables row -->
+        <div class="grid md:grid-cols-2 gap-6 mb-6">
+            <!-- Últimas donaciones -->
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h3 class="font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                    <i class="fas fa-list text-orange-500"></i> Últimas donaciones
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full dash-table">
+                        <thead><tr class="text-left text-xs text-gray-500 border-b border-gray-200">
+                            <th class="pb-2 px-2">Persona</th>
+                            <th class="pb-2 px-2">Tipo</th>
+                            <th class="pb-2 px-2">Cant.</th>
+                            <th class="pb-2 px-2">Estado</th>
+                            <th class="pb-2 px-2">Fecha</th>
+                        </tr></thead>
+                        <tbody id="dash-tabla-donaciones">
+                            <tr><td colspan="5" class="text-center text-gray-400 py-6 text-sm">Haz clic en Actualizar para cargar datos</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Últimos registros -->
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h3 class="font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                    <i class="fas fa-user-plus text-blue-500"></i> Últimas personas registradas
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full dash-table">
+                        <thead><tr class="text-left text-xs text-gray-500 border-b border-gray-200">
+                            <th class="pb-2 px-2">Nombre</th>
+                            <th class="pb-2 px-2">Ciudad</th>
+                            <th class="pb-2 px-2">Tipo</th>
+                            <th class="pb-2 px-2">Fecha</th>
+                        </tr></thead>
+                        <tbody id="dash-tabla-personas">
+                            <tr><td colspan="4" class="text-center text-gray-400 py-6 text-sm">Haz clic en Actualizar para cargar datos</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts row -->
+        <div class="grid md:grid-cols-2 gap-6 mb-6">
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h3 class="font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                    <i class="fas fa-chart-bar text-teal-600"></i> Donaciones por tipo de artículo
+                </h3>
+                <div id="dash-chart-tipos"><p class="text-gray-400 text-sm text-center py-4">Sin datos aún</p></div>
+            </div>
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h3 class="font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                    <i class="fas fa-clock text-blue-500"></i> Voluntarios por disponibilidad
+                </h3>
+                <div id="dash-chart-disponibilidad"><p class="text-gray-400 text-sm text-center py-4">Sin datos aún</p></div>
+            </div>
+        </div>
+
+        <!-- Charts row 2 -->
+        <div class="grid md:grid-cols-2 gap-6">
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h3 class="font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                    <i class="fas fa-tasks text-yellow-500"></i> Donaciones por estado
+                </h3>
+                <div id="dash-chart-estados"><p class="text-gray-400 text-sm text-center py-4">Sin datos aún</p></div>
+            </div>
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h3 class="font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                    <i class="fas fa-envelope-open-text text-cyan-600"></i> Últimos suscriptores newsletter
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full dash-table">
+                        <thead><tr class="text-left text-xs text-gray-500 border-b border-gray-200">
+                            <th class="pb-2 px-2">Email</th>
+                            <th class="pb-2 px-2">Vinculado</th>
+                            <th class="pb-2 px-2">Fecha</th>
+                        </tr></thead>
+                        <tbody id="dash-tabla-newsletter">
+                            <tr><td colspan="3" class="text-center text-gray-400 py-6 text-sm">Sin datos aún</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── REPORTES ────────────────────────────── -->
+    <section id="reportes" class="mb-16 bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-2xl md:text-3xl font-bold text-teal-800 mb-2">
+            <i class="fas fa-file-alt text-teal-600 mr-2 hidden"></i>Reportes
+        </h2>
+        <p class="text-gray-500 text-sm mb-6">Genera reportes filtrables de toda la información registrada</p>
+
+        <!-- Tabs -->
+        <div class="flex gap-0 border-b border-gray-200 mb-6 overflow-x-auto">
+            <button class="rep-tab active" id="rtab-donaciones"  onclick="switchReport('donaciones')"><i class="fas fa-donate mr-1"></i> Donaciones</button>
+            <button class="rep-tab"        id="rtab-voluntarios" onclick="switchReport('voluntarios')"><i class="fas fa-users mr-1"></i> Voluntarios</button>
+            <button class="rep-tab"        id="rtab-personas"    onclick="switchReport('personas')"><i class="fas fa-address-book mr-1"></i> Personas</button>
+            <button class="rep-tab"        id="rtab-newsletter"  onclick="switchReport('newsletter')"><i class="fas fa-envelope mr-1"></i> Newsletter</button>
+        </div>
+
+        <!-- ── Tab: Donaciones ── -->
+        <div id="rpanel-donaciones" class="rpanel">
+            <div class="bg-teal-50 border border-teal-200 rounded-lg p-4 mb-4">
+                <div class="flex flex-wrap gap-4 items-end">
+                    <div><label class="filter-label">Estado</label>
+                        <select id="rf-don-estado" class="filter-ctrl">
+                            <option value="">Todos</option>
+                            <option value="pendiente">Pendiente</option>
+                            <option value="confirmada">Confirmada</option>
+                            <option value="recogida">Recogida</option>
+                            <option value="entregada">Entregada</option>
+                            <option value="cancelada">Cancelada</option>
+                        </select>
+                    </div>
+                    <div><label class="filter-label">Desde</label><input type="date" id="rf-don-desde" class="filter-ctrl"></div>
+                    <div><label class="filter-label">Hasta</label><input type="date" id="rf-don-hasta" class="filter-ctrl"></div>
+                    <div><label class="filter-label">Buscar nombre / email</label>
+                        <input type="text" id="rf-don-q" class="filter-ctrl" placeholder="Ej: Juan" style="min-width:160px">
+                    </div>
+                    <button onclick="loadReporte('donaciones')"
+                        class="bg-teal-700 hover:bg-teal-800 text-white font-bold py-2 px-5 rounded-lg shadow-sm transition duration-300 flex items-center gap-2">
+                        <i class="fas fa-search"></i> Filtrar
+                    </button>
+                    <button onclick="window.print()"
+                        class="bg-white hover:bg-gray-100 text-gray-700 font-semibold py-2 px-4 border border-gray-300 rounded-lg transition duration-300 flex items-center gap-2">
+                        <i class="fas fa-print"></i> Imprimir
+                    </button>
+                </div>
+            </div>
+            <div id="r-don-summary" class="flex gap-3 flex-wrap mb-3"></div>
+            <div id="r-don-count" class="text-sm text-gray-500 mb-2"></div>
+            <div class="overflow-x-auto rounded-lg border border-gray-200">
+                <table class="w-full">
+                    <thead><tr>
+                        <th class="rep-th">#ID</th><th class="rep-th">Persona</th><th class="rep-th">Email</th>
+                        <th class="rep-th">Tipo donación</th><th class="rep-th">Cantidad</th>
+                        <th class="rep-th">Monto (L)</th><th class="rep-th">Estado</th><th class="rep-th">Fecha</th>
+                    </tr></thead>
+                    <tbody id="r-don-body">
+                        <tr><td colspan="8" class="rep-td text-center text-gray-400 py-8">Selecciona filtros y haz clic en <strong>Filtrar</strong></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ── Tab: Voluntarios ── -->
+        <div id="rpanel-voluntarios" class="rpanel hidden">
+            <div class="bg-teal-50 border border-teal-200 rounded-lg p-4 mb-4">
+                <div class="flex flex-wrap gap-4 items-end">
+                    <div><label class="filter-label">Disponibilidad</label>
+                        <select id="rf-vol-disp" class="filter-ctrl">
+                            <option value="">Todas</option>
+                            <option value="completa">Tiempo completo</option>
+                            <option value="parcial">Tiempo parcial</option>
+                            <option value="fines">Fines de semana</option>
+                            <option value="eventos">Solo eventos</option>
+                        </select>
+                    </div>
+                    <div><label class="filter-label">Estado</label>
+                        <select id="rf-vol-estado" class="filter-ctrl">
+                            <option value="">Todos</option>
+                            <option value="activo">Activo</option>
+                            <option value="inactivo">Inactivo</option>
+                        </select>
+                    </div>
+                    <div><label class="filter-label">Buscar nombre</label>
+                        <input type="text" id="rf-vol-q" class="filter-ctrl" placeholder="Ej: María" style="min-width:160px">
+                    </div>
+                    <button onclick="loadReporte('voluntarios')"
+                        class="bg-teal-700 hover:bg-teal-800 text-white font-bold py-2 px-5 rounded-lg shadow-sm transition duration-300 flex items-center gap-2">
+                        <i class="fas fa-search"></i> Filtrar
+                    </button>
+                    <button onclick="window.print()"
+                        class="bg-white hover:bg-gray-100 text-gray-700 font-semibold py-2 px-4 border border-gray-300 rounded-lg transition duration-300 flex items-center gap-2">
+                        <i class="fas fa-print"></i> Imprimir
+                    </button>
+                </div>
+            </div>
+            <div id="r-vol-count" class="text-sm text-gray-500 mb-2"></div>
+            <div class="overflow-x-auto rounded-lg border border-gray-200">
+                <table class="w-full">
+                    <thead><tr>
+                        <th class="rep-th">#ID</th><th class="rep-th">Nombre</th><th class="rep-th">Email</th>
+                        <th class="rep-th">Ciudad</th><th class="rep-th">Disponibilidad</th>
+                        <th class="rep-th">Habilidades</th><th class="rep-th">Estado</th><th class="rep-th">Registro</th>
+                    </tr></thead>
+                    <tbody id="r-vol-body">
+                        <tr><td colspan="8" class="rep-td text-center text-gray-400 py-8">Selecciona filtros y haz clic en <strong>Filtrar</strong></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ── Tab: Personas ── -->
+        <div id="rpanel-personas" class="rpanel hidden">
+            <div class="bg-teal-50 border border-teal-200 rounded-lg p-4 mb-4">
+                <div class="flex flex-wrap gap-4 items-end">
+                    <div><label class="filter-label">Ciudad</label>
+                        <input type="text" id="rf-per-ciudad" class="filter-ctrl" placeholder="Ej: Tegucigalpa">
+                    </div>
+                    <div><label class="filter-label">Buscar nombre / email</label>
+                        <input type="text" id="rf-per-q" class="filter-ctrl" placeholder="Ej: Ana" style="min-width:160px">
+                    </div>
+                    <div><label class="filter-label">Registrado desde</label>
+                        <input type="date" id="rf-per-desde" class="filter-ctrl">
+                    </div>
+                    <button onclick="loadReporte('personas')"
+                        class="bg-teal-700 hover:bg-teal-800 text-white font-bold py-2 px-5 rounded-lg shadow-sm transition duration-300 flex items-center gap-2">
+                        <i class="fas fa-search"></i> Filtrar
+                    </button>
+                    <button onclick="window.print()"
+                        class="bg-white hover:bg-gray-100 text-gray-700 font-semibold py-2 px-4 border border-gray-300 rounded-lg transition duration-300 flex items-center gap-2">
+                        <i class="fas fa-print"></i> Imprimir
+                    </button>
+                </div>
+            </div>
+            <div id="r-per-count" class="text-sm text-gray-500 mb-2"></div>
+            <div class="overflow-x-auto rounded-lg border border-gray-200">
+                <table class="w-full">
+                    <thead><tr>
+                        <th class="rep-th">#ID</th><th class="rep-th">Nombre</th><th class="rep-th">Email</th>
+                        <th class="rep-th">Teléfono</th><th class="rep-th">Ciudad</th>
+                        <th class="rep-th">Voluntario</th><th class="rep-th">Newsletter</th><th class="rep-th">Registro</th>
+                    </tr></thead>
+                    <tbody id="r-per-body">
+                        <tr><td colspan="8" class="rep-td text-center text-gray-400 py-8">Selecciona filtros y haz clic en <strong>Filtrar</strong></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ── Tab: Newsletter ── -->
+        <div id="rpanel-newsletter" class="rpanel hidden">
+            <div class="bg-teal-50 border border-teal-200 rounded-lg p-4 mb-4">
+                <div class="flex flex-wrap gap-4 items-end">
+                    <div><label class="filter-label">Estado</label>
+                        <select id="rf-news-activo" class="filter-ctrl">
+                            <option value="">Todos</option>
+                            <option value="1">Activos</option>
+                            <option value="0">Inactivos</option>
+                        </select>
+                    </div>
+                    <div><label class="filter-label">Buscar email</label>
+                        <input type="text" id="rf-news-q" class="filter-ctrl" placeholder="Ej: @gmail.com" style="min-width:180px">
+                    </div>
+                    <button onclick="loadReporte('newsletter')"
+                        class="bg-teal-700 hover:bg-teal-800 text-white font-bold py-2 px-5 rounded-lg shadow-sm transition duration-300 flex items-center gap-2">
+                        <i class="fas fa-search"></i> Filtrar
+                    </button>
+                    <button onclick="window.print()"
+                        class="bg-white hover:bg-gray-100 text-gray-700 font-semibold py-2 px-4 border border-gray-300 rounded-lg transition duration-300 flex items-center gap-2">
+                        <i class="fas fa-print"></i> Imprimir
+                    </button>
+                </div>
+            </div>
+            <div id="r-news-count" class="text-sm text-gray-500 mb-2"></div>
+            <div class="overflow-x-auto rounded-lg border border-gray-200">
+                <table class="w-full">
+                    <thead><tr>
+                        <th class="rep-th">#ID</th><th class="rep-th">Email</th>
+                        <th class="rep-th">Persona vinculada</th><th class="rep-th">Estado</th><th class="rep-th">Suscripción</th>
+                    </tr></thead>
+                    <tbody id="r-news-body">
+                        <tr><td colspan="5" class="rep-td text-center text-gray-400 py-8">Selecciona filtros y haz clic en <strong>Filtrar</strong></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<!-- ══════════════════════════════════════════════
+     FOOTER
+══════════════════════════════════════════════ -->
+<footer class="bg-teal-900 text-white py-8">
+    <div class="container mx-auto px-4">
+        <div class="grid md:grid-cols-4 gap-8 mb-8">
+            <div>
+                <h3 class="text-lg font-semibold mb-4">ONG Corazones Unidos</h3>
+                <p class="text-teal-300">Trabajando por un mundo más justo y solidario desde 1995.</p>
+                <div class="flex mt-4 space-x-4">
+                    <a href="#" class="text-teal-300 hover:text-white"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="text-teal-300 hover:text-white"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="text-teal-300 hover:text-white"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="text-teal-300 hover:text-white"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold mb-4">Enlaces rápidos</h3>
+                <ul class="space-y-2">
+                    <li><a href="#inicio"        class="text-teal-300 hover:text-white">Inicio</a></li>
+                    <li><a href="#donaciones"    class="text-teal-300 hover:text-white">Donaciones</a></li>
+                    <li><a href="#actividades"   class="text-teal-300 hover:text-white">Actividades</a></li>
+                    <li><a href="#afectados"     class="text-teal-300 hover:text-white">Afectados</a></li>
+                    <li><a href="#registro"      class="text-teal-300 hover:text-white">Regístrate</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold mb-4">Legal</h3>
+                <ul class="space-y-2">
+                    <li><a href="#" class="text-teal-300 hover:text-white">Política de privacidad</a></li>
+                    <li><a href="#" class="text-teal-300 hover:text-white">Términos y condiciones</a></li>
+                    <li><a href="#" class="text-teal-300 hover:text-white">Transparencia</a></li>
+                    <li><a href="#" class="text-teal-300 hover:text-white">Informe anual</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold mb-4">Suscríbete</h3>
+                <p class="text-teal-300 mb-2">Recibe nuestras noticias y actualizaciones.</p>
+                <form id="formulario-newsletter" class="flex" novalidate>
+                    <input type="email" id="news-email" name="email" placeholder="Tu correo electrónico"
+                        class="px-3 py-2 rounded-l text-gray-800 w-full focus:outline-none">
+                    <button type="submit" id="btn-newsletter"
+                        class="bg-teal-600 hover:bg-teal-700 px-4 py-2 rounded-r transition duration-300">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+        <div class="border-t border-teal-800 pt-6 text-center text-teal-400">
+            <p>&copy; 2026 UTH ONG Corazones Unidos. Todos los derechos reservados.</p>
+        </div>
+    </div>
+</footer>
+
+<!-- ══════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════ -->
+<script>
+// ══════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════
+const BCOLORS = ['#0d9488','#3b82f6','#f59e0b','#8b5cf6','#ec4899','#10b981','#ef4444','#f97316'];
+
+function fmtDate(s) {
+    if (!s) return '—';
+    return new Date(s).toLocaleDateString('es-HN',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+function fmtNum(n) { return Number(n||0).toLocaleString('es-HN'); }
+function estadoPill(e) {
+    const m = {pendiente:'pill-yellow',confirmada:'pill-blue',recogida:'pill-blue',entregada:'pill-green',cancelada:'pill-red'};
+    return `<span class="pill ${m[e]||'pill-gray'}">${e}</span>`;
+}
+function dispLabel(d) {
+    return {completa:'Tiempo completo',parcial:'Tiempo parcial',fines:'Fines de semana',eventos:'Solo eventos'}[d]||d;
+}
+function renderBars(id, rows, labelKey, valueKey) {
+    const c = document.getElementById(id);
+    if (!rows||!rows.length) { c.innerHTML='<p class="text-gray-400 text-sm text-center py-3">Sin datos</p>'; return; }
+    const max = Math.max(...rows.map(r=>+r[valueKey]))||1;
+    c.innerHTML = rows.map((r,i)=>`
+      <div class="bar-wrap">
+        <span class="bar-label">${r[labelKey]}</span>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${Math.round((+r[valueKey]/max)*100)}%;background:${BCOLORS[i%BCOLORS.length]}">
+            ${r[valueKey]}
+          </div>
+        </div>
+      </div>`).join('');
+}
+
+async function loadDashboard() {
+    document.getElementById('dash-updated').textContent = 'Cargando...';
+    try {
+        const res  = await fetch('dashboard_data.php');
+        const data = await res.json();
+
+        document.getElementById('kpi-personas').textContent      = fmtNum(data.kpis?.total_personas);
+        document.getElementById('kpi-voluntarios').textContent   = fmtNum(data.kpis?.total_voluntarios);
+        document.getElementById('kpi-donaciones').textContent    = fmtNum(data.kpis?.total_donaciones);
+        document.getElementById('kpi-lempiras').textContent      = 'L ' + fmtNum(data.kpis?.total_lempiras_donados);
+        document.getElementById('kpi-beneficiarios').textContent = fmtNum(data.kpis?.total_beneficiarios);
+        document.getElementById('kpi-actividades').textContent   = fmtNum(data.kpis?.actividades_activas);
+        document.getElementById('kpi-pendientes').textContent    = fmtNum(data.kpis?.donaciones_pendientes);
+        document.getElementById('kpi-suscriptores').textContent  = fmtNum(data.kpis?.total_suscriptores);
+
+        document.getElementById('dash-tabla-donaciones').innerHTML =
+            (data.ultimas_donaciones||[]).map(r=>`<tr>
+                <td class="px-2">${r.nombre_completo}</td>
+                <td class="px-2">${r.tipo_donacion}</td>
+                <td class="px-2">${r.cantidad}</td>
+                <td class="px-2">${estadoPill(r.estado)}</td>
+                <td class="px-2">${fmtDate(r.fecha_donacion)}</td>
+            </tr>`).join('') || '<tr><td colspan="5" class="text-center text-gray-400 py-4 text-sm">Sin registros</td></tr>';
+
+        document.getElementById('dash-tabla-personas').innerHTML =
+            (data.ultimas_personas||[]).map(r=>`<tr>
+                <td class="px-2">${r.nombre_completo}</td>
+                <td class="px-2">${r.ciudad||'—'}</td>
+                <td class="px-2">${r.es_voluntario=='1'?'<span class="pill pill-blue">Voluntario</span>':'<span class="pill pill-gray">Donador</span>'}</td>
+                <td class="px-2">${fmtDate(r.fecha_registro)}</td>
+            </tr>`).join('') || '<tr><td colspan="4" class="text-center text-gray-400 py-4 text-sm">Sin registros</td></tr>';
+
+        renderBars('dash-chart-tipos',          data.donaciones_por_tipo,   'tipo',  'total');
+        renderBars('dash-chart-disponibilidad', (data.voluntarios_por_disp||[]).map(r=>({...r,label:dispLabel(r.disponibilidad)})), 'label', 'total');
+        renderBars('dash-chart-estados',        data.donaciones_por_estado, 'estado','total');
+
+        document.getElementById('dash-tabla-newsletter').innerHTML =
+            (data.ultimos_suscriptores||[]).map(r=>`<tr>
+                <td class="px-2">${r.email}</td>
+                <td class="px-2">${r.nombre_completo?'<span class="pill pill-green">Sí</span>':'<span class="pill pill-gray">No</span>'}</td>
+                <td class="px-2">${fmtDate(r.fecha_suscripcion)}</td>
+            </tr>`).join('') || '<tr><td colspan="3" class="text-center text-gray-400 py-4 text-sm">Sin registros</td></tr>';
+
+        document.getElementById('dash-updated').textContent = 'Actualizado: ' + new Date().toLocaleTimeString('es-HN');
+    } catch(e) {
+        console.error(e);
+        document.getElementById('dash-updated').textContent = 'Error al cargar';
+    }
+}
+
+// ══════════════════════════════════════════════
+// REPORTES
+// ══════════════════════════════════════════════
+function switchReport(name) {
+    document.querySelectorAll('.rpanel').forEach(p=>p.classList.add('hidden'));
+    document.getElementById('rpanel-'+name).classList.remove('hidden');
+    document.querySelectorAll('.rep-tab').forEach(t=>t.classList.remove('active'));
+    document.getElementById('rtab-'+name).classList.add('active');
+}
+
+async function loadReporte(tipo) {
+    let url = 'reporte_data.php?tipo=' + tipo;
+    if (tipo==='donaciones') {
+        const e=document.getElementById('rf-don-estado').value;
+        const d=document.getElementById('rf-don-desde').value;
+        const h=document.getElementById('rf-don-hasta').value;
+        const q=document.getElementById('rf-don-q').value;
+        if(e) url+='&estado='+e; if(d) url+='&desde='+d;
+        if(h) url+='&hasta='+h; if(q) url+='&q='+encodeURIComponent(q);
+    } else if (tipo==='voluntarios') {
+        const d=document.getElementById('rf-vol-disp').value;
+        const e=document.getElementById('rf-vol-estado').value;
+        const q=document.getElementById('rf-vol-q').value;
+        if(d) url+='&disponibilidad='+d; if(e) url+='&estado='+e; if(q) url+='&q='+encodeURIComponent(q);
+    } else if (tipo==='personas') {
+        const c=document.getElementById('rf-per-ciudad').value;
+        const q=document.getElementById('rf-per-q').value;
+        const d=document.getElementById('rf-per-desde').value;
+        if(c) url+='&ciudad='+encodeURIComponent(c); if(q) url+='&q='+encodeURIComponent(q); if(d) url+='&desde='+d;
+    } else if (tipo==='newsletter') {
+        const a=document.getElementById('rf-news-activo').value;
+        const q=document.getElementById('rf-news-q').value;
+        if(a!=='') url+='&activo='+a; if(q) url+='&q='+encodeURIComponent(q);
+    }
+    try {
+        const res=await fetch(url);
+        const data=await res.json();
+        renderReporte(tipo, data);
+    } catch(e) {
+        console.error(e);
+        showToast('Error al cargar el reporte.','error');
+    }
+}
+
+function renderReporte(tipo, data) {
+    const rows = data.rows || [];
+    if (tipo==='donaciones') {
+        const totL = rows.reduce((s,r)=>s+(r.es_monetaria=='1'?+r.monto_lempiras:0),0);
+        document.getElementById('r-don-count').textContent = `${rows.length} resultado(s) encontrado(s)`;
+        document.getElementById('r-don-summary').innerHTML =
+            `<span class="pill pill-blue">Total: ${rows.length}</span>
+             <span class="pill pill-green">L ${fmtNum(totL)} recaudados</span>
+             <span class="pill pill-yellow">Pendientes: ${rows.filter(r=>r.estado==='pendiente').length}</span>
+             <span class="pill pill-gray">Entregadas: ${rows.filter(r=>r.estado==='entregada').length}</span>`;
+        document.getElementById('r-don-body').innerHTML = rows.map(r=>`<tr>
+            <td class="rep-td">#${r.id_donacion}</td>
+            <td class="rep-td">${r.nombre_completo}</td>
+            <td class="rep-td">${r.email}</td>
+            <td class="rep-td">${r.tipo_donacion}</td>
+            <td class="rep-td">${r.cantidad}</td>
+            <td class="rep-td">${r.es_monetaria=='1'?'L '+fmtNum(r.monto_lempiras):'—'}</td>
+            <td class="rep-td">${estadoPill(r.estado)}</td>
+            <td class="rep-td">${fmtDate(r.fecha_donacion)}</td>
+        </tr>`).join('') || '<tr><td colspan="8" class="rep-td text-center text-gray-400 py-6">Sin resultados</td></tr>';
+
+    } else if (tipo==='voluntarios') {
+        document.getElementById('r-vol-count').textContent = `${rows.length} voluntario(s)`;
+        document.getElementById('r-vol-body').innerHTML = rows.map(r=>`<tr>
+            <td class="rep-td">#${r.id_voluntario}</td>
+            <td class="rep-td">${r.nombre_completo}</td>
+            <td class="rep-td">${r.email}</td>
+            <td class="rep-td">${r.ciudad||'—'}</td>
+            <td class="rep-td">${dispLabel(r.disponibilidad)}</td>
+            <td class="rep-td">${r.habilidades||'—'}</td>
+            <td class="rep-td">${r.estado==='activo'?'<span class="pill pill-green">Activo</span>':'<span class="pill pill-gray">Inactivo</span>'}</td>
+            <td class="rep-td">${fmtDate(r.fecha_registro)}</td>
+        </tr>`).join('') || '<tr><td colspan="8" class="rep-td text-center text-gray-400 py-6">Sin resultados</td></tr>';
+
+    } else if (tipo==='personas') {
+        document.getElementById('r-per-count').textContent = `${rows.length} persona(s)`;
+        document.getElementById('r-per-body').innerHTML = rows.map(r=>`<tr>
+            <td class="rep-td">#${r.id}</td>
+            <td class="rep-td">${r.nombre_completo}</td>
+            <td class="rep-td">${r.email}</td>
+            <td class="rep-td">${r.telefono||'—'}</td>
+            <td class="rep-td">${r.ciudad||'—'}</td>
+            <td class="rep-td">${r.es_voluntario=='1'?'<span class="pill pill-blue">Sí</span>':'No'}</td>
+            <td class="rep-td">${r.recibe_newsletter=='1'?'<span class="pill pill-green">Sí</span>':'No'}</td>
+            <td class="rep-td">${fmtDate(r.fecha_registro)}</td>
+        </tr>`).join('') || '<tr><td colspan="8" class="rep-td text-center text-gray-400 py-6">Sin resultados</td></tr>';
+
+    } else if (tipo==='newsletter') {
+        document.getElementById('r-news-count').textContent = `${rows.length} suscriptor(es)`;
+        document.getElementById('r-news-body').innerHTML = rows.map(r=>`<tr>
+            <td class="rep-td">#${r.id}</td>
+            <td class="rep-td">${r.email}</td>
+            <td class="rep-td">${r.nombre_completo||'<span class="text-gray-400">No registrado</span>'}</td>
+            <td class="rep-td">${r.activo=='1'?'<span class="pill pill-green">Activo</span>':'<span class="pill pill-red">Inactivo</span>'}</td>
+            <td class="rep-td">${fmtDate(r.fecha_suscripcion)}</td>
+        </tr>`).join('') || '<tr><td colspan="5" class="rep-td text-center text-gray-400 py-6">Sin resultados</td></tr>';
+    }
+}
+
+// ── Utilidades ────────────────────────────────────────────────
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    const icons = { success: 'fa-check-circle', error: 'fa-times-circle', info: 'fa-info-circle' };
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `<i class="fas ${icons[type]} text-xl"></i><span>${message}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity .5s'; setTimeout(() => toast.remove(), 500); }, 5000);
+}
+
+function setLoading(btn, loading, originalHTML) {
+    if (loading) {
+        btn.classList.add('btn-loading');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Enviando...';
+    } else {
+        btn.classList.remove('btn-loading');
+        btn.innerHTML = originalHTML;
+    }
+}
+
+async function sendJSON(url, data) {
+    const res  = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    return res.json();
+}
+
+// ── Navegación suave ──────────────────────────────────────────
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+        const target = document.querySelector(this.getAttribute('href'));
+        if (!target) return;
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth' });
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('bg-teal-600'));
+        this.classList.add('bg-teal-600');
+    });
+});
+
+window.addEventListener('scroll', function() {
+    let current = '';
+    document.querySelectorAll('section').forEach(s => {
+        if (pageYOffset >= s.offsetTop - 100) current = s.getAttribute('id');
+    });
+    document.querySelectorAll('.nav-link').forEach(l => {
+        l.classList.remove('bg-teal-600');
+        if (l.getAttribute('href') === `#${current}`) l.classList.add('bg-teal-600');
+    });
+});
+
+// ── Checkboxes donación: habilitar/deshabilitar cantidades ────
+document.querySelectorAll('input[name="donation"]').forEach(chk => {
+    const item  = chk.closest('.donation-item');
+    const input = item.querySelector('input[type="number"]');
+    input.disabled     = true;
+    input.style.opacity = '0.4';
+
+    chk.addEventListener('change', () => {
+        input.disabled      = !chk.checked;
+        input.style.opacity = chk.checked ? '1' : '0.4';
+    });
+});
+
+// ── Formulario DONACIÓN ────────────────────────────────────────
+const formDonacion    = document.getElementById('formulario-donacion');
+const btnDonacion     = document.getElementById('btn-enviar-donacion');
+const btnDonacionHTML = btnDonacion.innerHTML;
+
+formDonacion.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const fd = new FormData(this);
+
+    // Recopilar checkboxes
+    const donation = [...document.querySelectorAll('input[name="donation"]:checked')].map(c => c.value);
+
+    if (!donation.length) {
+        showToast('Por favor selecciona al menos un tipo de donación.', 'error');
+        return;
+    }
+
+    const nombre = fd.get('nombre')?.trim();
+    const email  = fd.get('email')?.trim();
+    if (!nombre || !email) {
+        showToast('Nombre y correo son obligatorios.', 'error');
+        return;
+    }
+
+    // FIX: FormData ignora inputs disabled, así que leemos el valor
+    // directamente del DOM con .value para garantizar que llegan las cantidades.
+    function qtyVal(name, fallback) {
+        const el = document.querySelector('[name="' + name + '"]');
+        return el ? (parseFloat(el.value) || fallback) : fallback;
+    }
+
+    const payload = {
+        donation,
+        nombre,
+        email,
+        telefono:              fd.get('telefono')  || '',
+        direccion:             fd.get('direccion') || '',
+        alimentos_cantidad:    qtyVal('alimentos_cantidad',    1),
+        ropa_cantidad:         qtyVal('ropa_cantidad',         1),
+        medicamentos_cantidad: qtyVal('medicamentos_cantidad', 1),
+        utiles_cantidad:       qtyVal('utiles_cantidad',       1),
+        juguetes_cantidad:     qtyVal('juguetes_cantidad',     1),
+        dinero_monto:          qtyVal('dinero_monto',        100),
+    };
+
+    setLoading(btnDonacion, true, btnDonacionHTML);
+
+    try {
+        const data = await sendJSON('procesar_donacion.php', payload);
+        showToast(data.message, data.success ? 'success' : 'error');
+        if (data.success) {
+            formDonacion.reset();
+            // Restaurar estado disabled de cantidades tras reset
+            document.querySelectorAll('input[name="donation"]').forEach(chk => {
+                const input = chk.closest('.donation-item').querySelector('input[type="number"]');
+                input.disabled     = true;
+                input.style.opacity = '0.4';
+            });
+        }
+    } catch {
+        showToast('Error de conexión. Por favor intenta nuevamente.', 'error');
+    } finally {
+        setLoading(btnDonacion, false, btnDonacionHTML);
+    }
+});
+
+// ── Formulario REGISTRO ────────────────────────────────────────
+const formRegistro    = document.getElementById('formulario-registro');
+const btnRegistro     = document.getElementById('btn-enviar-registro');
+const btnRegistroHTML = btnRegistro.innerHTML;
+
+formRegistro.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const fd = new FormData(this);
+
+    const nombre      = fd.get('nombre-completo')?.trim();
+    const email       = fd.get('email')?.trim();
+    const telefono    = fd.get('telefono')?.trim();
+    const ciudad      = fd.get('ciudad')?.trim();
+    const tipoAyuda   = fd.get('ayuda');
+    const disponib    = fd.get('disponibilidad');
+    const privacidad  = fd.get('privacidad') === 'on';
+
+    if (!nombre || !email || !telefono || !ciudad) {
+        showToast('Por favor completa todos los campos obligatorios.', 'error');
+        return;
+    }
+    if (!tipoAyuda) {
+        showToast('Selecciona cómo deseas ayudar.', 'error');
+        return;
+    }
+    if (!disponib) {
+        showToast('Selecciona tu disponibilidad.', 'error');
+        return;
+    }
+    if (!privacidad) {
+        showToast('Debes aceptar la política de privacidad.', 'error');
+        return;
+    }
+
+    const payload = {
+        'nombre-completo': nombre,
+        email, telefono, ciudad,
+        ayuda:             tipoAyuda,
+        habilidades:       fd.get('habilidades')  || '',
+        disponibilidad:    disponib,
+        'como-conocio':    fd.get('como-conocio') || '',
+        privacidad:        true,
+        newsletter:        fd.get('newsletter') === 'on',
+    };
+
+    setLoading(btnRegistro, true, btnRegistroHTML);
+
+    try {
+        const data = await sendJSON('procesar_registro.php', payload);
+        showToast(data.message, data.success ? 'success' : 'error');
+        if (data.success) formRegistro.reset();
+    } catch {
+        showToast('Error de conexión. Por favor intenta nuevamente.', 'error');
+    } finally {
+        setLoading(btnRegistro, false, btnRegistroHTML);
+    }
+});
+
+// ── Formulario NEWSLETTER ──────────────────────────────────────
+const formNews    = document.getElementById('formulario-newsletter');
+const btnNews     = document.getElementById('btn-newsletter');
+const btnNewsHTML = btnNews.innerHTML;
+
+formNews.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const email = document.getElementById('news-email').value.trim();
+    if (!email) {
+        showToast('Ingresa tu correo electrónico.', 'error');
+        return;
+    }
+
+    setLoading(btnNews, true, btnNewsHTML);
+
+    try {
+        const data = await sendJSON('procesar_newsletter.php', { email });
+        showToast(data.message, data.success ? 'success' : 'error');
+        if (data.success) formNews.reset();
+    } catch {
+        showToast('Error de conexión. Por favor intenta nuevamente.', 'error');
+    } finally {
+        setLoading(btnNews, false, btnNewsHTML);
+    }
+});
+</script>
+
+</body>
+</html>
