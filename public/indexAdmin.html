@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Administrativo | Manos Unidas</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Estilo para la pestaña activa */
+        .tab-active {
+            color: #0d9488 !important;
+            border-bottom: 3px solid #0d9488 !important;
+            background-color: #f0fdfa;
+        }
+
+        /* Scroll suave para tablas en móvil */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Ocultar scrollbar pero mantener funcionalidad */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+
+<!-- HEADER PRINCIPAL -->
+<header class="bg-teal-800 text-white shadow-md sticky top-0 z-50">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+        <!-- Brand -->
+        <div class="flex items-center gap-3">
+            <div class="bg-white/10 p-2 rounded-lg">
+                <i class="fas fa-shield-halved text-2xl text-teal-300"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold leading-none">Panel Admin</h1>
+                <p class="text-teal-300 text-xs font-medium">Manos Unidas Honduras</p>
+            </div>
+        </div>
+        
+        <!-- Acciones Rápidas -->
+        <div class="flex items-center gap-3">
+            <a href="index.php" class="hidden sm:flex items-center gap-2 text-sm bg-teal-700 hover:bg-teal-600 px-4 py-2 rounded-md transition border border-teal-600">
+                <i class="fas fa-external-link-alt text-xs"></i> Ver Sitio
+            </a>
+            
+            <!-- Perfil Admin -->
+            <div class="relative">
+                <button id="admin-perfil-btn" class="flex items-center gap-2 hover:bg-teal-700 p-1 rounded-lg transition focus:outline-none">
+                    <div class="w-9 h-9 bg-teal-500 rounded-full flex items-center justify-center font-bold text-teal-900 border-2 border-teal-400">
+                        A
+                    </div>
+                    <i class="fas fa-chevron-down text-xs opacity-70"></i>
+                </button>
+                <!-- Menú Desplegable -->
+                <div id="admin-perfil-menu" class="hidden absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-2xl py-2 text-gray-800 border border-slate-200">
+                    <div class="px-4 py-2 border-b border-slate-100 mb-1">
+                        <p class="text-xs text-slate-400 font-bold uppercase">Sesión actual</p>
+                        <p class="text-sm font-semibold truncate">admin@manosunidas.hn</p>
+                    </div>
+                    <a href="logout.php" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 font-semibold transition">
+                        <i class="fas fa-sign-out-alt mr-2"></i> Cerrar Sesión
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- NAVEGACIÓN POR PESTAÑAS (Sticky Móvil) -->
+<nav class="bg-white border-b border-slate-200 sticky top-[64px] z-40">
+    <div class="container mx-auto px-4">
+        <div class="flex overflow-x-auto no-scrollbar gap-2">
+            <button onclick="changeTab('dashboard', this)" class="tab-link tab-active px-6 py-4 font-bold text-slate-500 transition-all whitespace-nowrap flex items-center gap-2">
+                <i class="fas fa-chart-pie"></i> Dashboard
+            </button>
+            <button onclick="changeTab('donaciones', this)" class="tab-link px-6 py-4 font-bold text-slate-500 transition-all whitespace-nowrap flex items-center gap-2">
+                <i class="fas fa-box-open"></i> Donaciones
+            </button>
+            <button onclick="changeTab('voluntarios', this)" class="tab-link px-6 py-4 font-bold text-slate-500 transition-all whitespace-nowrap flex items-center gap-2">
+                <i class="fas fa-users"></i> Voluntarios
+            </button>
+            <button onclick="changeTab('usuarios', this)" class="tab-link px-6 py-4 font-bold text-slate-500 transition-all whitespace-nowrap flex items-center gap-2">
+                <i class="fas fa-id-badge"></i> Usuarios
+            </button>
+        </div>
+    </div>
+</nav>
+
+<main class="container mx-auto px-4 py-8">
+
+    <!-- SECCIÓN: DASHBOARD -->
+    <section id="section-dashboard" class="content-section space-y-8">
+        <div class="flex items-center justify-between">
+            <h2 class="text-2xl font-bold text-slate-800">Resumen de Impacto</h2>
+            <span class="text-xs font-bold text-slate-400 bg-slate-200 px-3 py-1 rounded-full uppercase tracking-tighter">Actualizado ahora</span>
+        </div>
+
+        <!-- Tarjetas de Estadísticas -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-b-4 border-b-blue-500">
+                <p class="text-slate-400 text-xs font-bold uppercase mb-2">Total Donaciones</p>
+                <div class="flex items-center justify-between">
+                    <span class="text-3xl font-extrabold">2,450</span>
+                    <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600"><i class="fas fa-hand-holding-heart"></i></div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-b-4 border-b-teal-500">
+                <p class="text-slate-400 text-xs font-bold uppercase mb-2">Confirmadas</p>
+                <div class="flex items-center justify-between">
+                    <span class="text-3xl font-extrabold">1,820</span>
+                    <div class="w-10 h-10 bg-teal-50 rounded-lg flex items-center justify-center text-teal-600"><i class="fas fa-check-circle"></i></div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-b-4 border-b-purple-500">
+                <p class="text-slate-400 text-xs font-bold uppercase mb-2">Voluntarios</p>
+                <div class="flex items-center justify-between">
+                    <span class="text-3xl font-extrabold">342</span>
+                    <div class="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center text-purple-600"><i class="fas fa-user-friends"></i></div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-b-4 border-b-orange-500">
+                <p class="text-slate-400 text-xs font-bold uppercase mb-2">Pendientes</p>
+                <div class="flex items-center justify-between">
+                    <span class="text-3xl font-extrabold text-orange-600">12</span>
+                    <div class="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center text-orange-600"><i class="fas fa-clock"></i></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECCIÓN: DONACIONES (TABLA RESPONSIVA) -->
+    <section id="section-donaciones" class="content-section hidden space-y-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <h2 class="text-2xl font-bold text-slate-800">Control de Donaciones</h2>
+            <div class="flex items-center gap-2">
+                <button class="bg-white border border-slate-200 p-2 rounded-lg text-slate-600 hover:bg-slate-50 transition"><i class="fas fa-filter mr-2"></i>Filtros</button>
+                <button class="bg-teal-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-teal-700 transition">Nueva Donación</button>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="table-responsive">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold">
+                        <tr>
+                            <th class="px-6 py-4">ID</th>
+                            <th class="px-6 py-4">Donante</th>
+                            <th class="px-6 py-4">Contenido</th>
+                            <th class="px-6 py-4">Estado</th>
+                            <th class="px-6 py-4 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        <tr class="hover:bg-teal-50 transition">
+                            <td class="px-6 py-4 font-mono text-xs text-slate-400">#MN-2045</td>
+                            <td class="px-6 py-4 font-semibold">Roberto Martínez</td>
+                            <td class="px-6 py-4">Ropa de invierno y calzado</td>
+                            <td class="px-6 py-4">
+                                <span class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest">Pendiente</span>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <button onclick="openModalEstado()" class="text-teal-600 hover:bg-teal-100 p-2 rounded-lg transition"><i class="fas fa-edit"></i></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- LAS DEMÁS SECCIONES (USUARIOS / VOLUNTARIOS) SE MANEJAN IGUAL -->
+    <section id="section-voluntarios" class="content-section hidden">
+        <div class="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-300">
+            <i class="fas fa-user-cog text-5xl text-slate-200 mb-4"></i>
+            <p class="text-slate-400 font-medium">Módulo de Voluntarios listo para conectar con tu DB</p>
+        </div>
+    </section>
+
+    <section id="section-usuarios" class="content-section hidden">
+        <div class="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-300">
+            <i class="fas fa-database text-5xl text-slate-200 mb-4"></i>
+            <p class="text-slate-400 font-medium">Gestión de Usuarios encriptada</p>
+        </div>
+    </section>
+
+</main>
+
+<!-- MODAL: CAMBIAR ESTADO (ADAPTABLE) -->
+<div id="modal-estado" class="fixed inset-0 bg-slate-900/60 hidden z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden transform transition-all">
+        <div class="bg-teal-800 p-4 text-white flex justify-between items-center">
+            <h3 class="font-bold">Actualizar Donación</h3>
+            <button onclick="closeModal()" class="hover:rotate-90 transition-transform duration-300"><i class="fas fa-times text-xl"></i></button>
+        </div>
+        <form class="p-6 space-y-4">
+            <div>
+                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Nuevo Estado</label>
+                <select class="w-full border border-slate-200 rounded-xl p-3 outline-none focus:ring-2 focus:ring-teal-500 transition bg-slate-50 font-medium">
+                    <option value="pendiente">🕒 Pendiente</option>
+                    <option value="confirmada">✅ Confirmada</option>
+                    <option value="recogida">🚚 Recogida</option>
+                    <option value="entregada">🏠 Entregada</option>
+                    <option value="cancelada">❌ Cancelada</option>
+                </select>
+            </div>
+            <button type="submit" class="w-full bg-teal-600 text-white font-bold py-3 rounded-xl hover:bg-teal-700 shadow-lg shadow-teal-200 transition active:scale-95">
+                Guardar Cambios
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Lógica para el Perfil
+    const btnPerfil = document.getElementById('admin-perfil-btn');
+    const menuPerfil = document.getElementById('admin-perfil-menu');
+
+    btnPerfil.onclick = (e) => {
+        e.stopPropagation();
+        menuPerfil.classList.toggle('hidden');
+    };
+
+    // Lógica de Pestañas
+    function changeTab(tabId, element) {
+        // Ocultar todas las secciones
+        document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
+        // Quitar estilos activos
+        document.querySelectorAll('.tab-link').forEach(l => l.classList.remove('tab-active'));
+        
+        // Mostrar sección y activar botón
+        document.getElementById('section-' + tabId).classList.remove('hidden');
+        element.classList.add('tab-active');
+    }
+
+    // Modal
+    function openModalEstado() { document.getElementById('modal-estado').classList.remove('hidden'); }
+    function closeModal() { document.getElementById('modal-estado').classList.add('hidden'); }
+
+    // Cerrar todo al hacer clic fuera
+    window.onclick = (e) => {
+        if (!btnPerfil.contains(e.target)) menuPerfil.classList.add('hidden');
+        if (e.target.id === 'modal-estado') closeModal();
+    };
+</script>
+
+</body>
+</html>
